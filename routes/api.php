@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SurveyController;
 use App\Http\Controllers\QualificationController;
+use App\Http\Controllers\QuotaController;
 Route::post('/survey/save', [SurveyController::class, 'saveSurvey']);
 Route::get('/survey/{id}', [SurveyController::class, 'viewSurvey']);
 Route::get('/surveys', [SurveyController::class, 'listSurveys']);
@@ -17,7 +18,19 @@ Route::get('/qualification/{id}', [QualificationController::class, 'show']);
 Route::put('/qualification/{id}', [QualificationController::class, 'update']);
 Route::delete('/qualification/{id}', [QualificationController::class, 'destroy']);
 
+Route::prefix('quotas')->group(function () {
 
+    Route::get('/', [QuotaController::class, 'index']);        // List all
+    Route::post('/', [QuotaController::class, 'store']);       // Create
+    Route::get('/{id}', [QuotaController::class, 'show']);     // Show
+    Route::put('/{id}', [QuotaController::class, 'update']);   // Update
+    Route::delete('/{id}', [QuotaController::class, 'destroy']); // Soft Delete
+
+    // Soft Delete Extras
+    Route::get('/trash/list', [QuotaController::class, 'trashed']);  // View trashed
+    Route::post('/restore/{id}', [QuotaController::class, 'restore']); // Restore
+    Route::delete('/force/{id}', [QuotaController::class, 'forceDelete']); // Permanent delete
+});
 
 // Public Routes
 Route::post('/register', [AuthController::class, 'register']);
