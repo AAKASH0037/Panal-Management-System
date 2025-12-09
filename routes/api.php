@@ -3,6 +3,11 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\SurveyController;
+
+Route::post('/survey/save', [SurveyController::class, 'saveSurvey']);
+Route::get('/survey/{id}', [SurveyController::class, 'viewSurvey']);
+Route::get('/surveys', [SurveyController::class, 'listSurveys']);
 
 // Public Routes
 Route::post('/register', [AuthController::class, 'register']);
