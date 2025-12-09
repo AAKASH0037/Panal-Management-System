@@ -81,4 +81,22 @@ class SurveyController extends Controller
             'data'    => Survey::latest()->get()
         ]);
     }
+    public function deleteSurvey($id)
+{
+    $survey = Survey::find($id);
+
+    if (!$survey) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Survey not found'
+        ], 404);
+    }
+
+    $survey->delete(); // SOFT DELETE
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Survey soft deleted successfully'
+    ]);
+}
 }

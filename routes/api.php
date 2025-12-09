@@ -8,7 +8,7 @@ use App\Http\Controllers\SurveyController;
 Route::post('/survey/save', [SurveyController::class, 'saveSurvey']);
 Route::get('/survey/{id}', [SurveyController::class, 'viewSurvey']);
 Route::get('/surveys', [SurveyController::class, 'listSurveys']);
-
+Route::delete('/survey/delete/{id}', [SurveyController::class, 'deleteSurvey']);
 // Public Routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
