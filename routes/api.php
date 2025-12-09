@@ -27,9 +27,6 @@ Route::prefix('quotas')->group(function () {
     Route::delete('/{id}', [QuotaController::class, 'destroy']); // Soft Delete
 
     // Soft Delete Extras
-    Route::get('/trash/list', [QuotaController::class, 'trashed']);  // View trashed
-    Route::post('/restore/{id}', [QuotaController::class, 'restore']); // Restore
-    Route::delete('/force/{id}', [QuotaController::class, 'forceDelete']); // Permanent delete
 });
 
 // Public Routes
