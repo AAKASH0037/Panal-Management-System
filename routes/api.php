@@ -6,12 +6,14 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SurveyController;
 use App\Http\Controllers\QualificationController;
 use App\Http\Controllers\QuotaController;
+use App\Http\Controllers\ProfileController;
+
 Route::post('/survey/save', [SurveyController::class, 'saveSurvey']);
 Route::get('/survey/{id}', [SurveyController::class, 'viewSurvey']);
 Route::get('/surveys', [SurveyController::class, 'listSurveys']);
 Route::delete('/survey/delete/{id}', [SurveyController::class, 'deleteSurvey']);
-
-
+Route::get('/income', [ProfileController::class, 'getIncome']);
+Route::get('/education', [ProfileController::class, 'getEducation']);
 Route::post('/qualification', [QualificationController::class, 'store']);
 Route::get('/qualification', [QualificationController::class, 'index']);
 Route::get('/qualification/{id}', [QualificationController::class, 'show']);
