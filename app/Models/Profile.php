@@ -16,8 +16,12 @@ class Profile extends Model
         'age',
         'gender',
         'state',
-        'qualification',
+        'education',
         'income',
+        'zip_code',
+        'city',
+        'country',
+
     ];
 
     /**

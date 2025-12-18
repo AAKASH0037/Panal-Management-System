@@ -7,7 +7,7 @@ use App\Http\Controllers\SurveyController;
 use App\Http\Controllers\QualificationController;
 use App\Http\Controllers\QuotaController;
 use App\Http\Controllers\ProfileController;
-
+// Route::post('/profile_save', [ProfileController::class, 'saveProfile']);
 Route::post('/survey/save', [SurveyController::class, 'saveSurvey']);
 Route::get('/survey/{id}', [SurveyController::class, 'viewSurvey']);
 Route::get('/surveys', [SurveyController::class, 'listSurveys']);
@@ -36,7 +36,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
-
+    Route::post('/profile_save', [ProfileController::class, 'saveProfile']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::get('/profile', function(Request $request) {
