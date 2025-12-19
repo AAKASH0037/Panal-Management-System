@@ -7,6 +7,8 @@ use App\Http\Controllers\SurveyController;
 use App\Http\Controllers\QualificationController;
 use App\Http\Controllers\QuotaController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SupplierApiController;
+
 // Route::post('/profile_save', [ProfileController::class, 'saveProfile']);
 Route::post('/survey/save', [SurveyController::class, 'saveSurvey']);
 Route::get('/survey/{id}', [SurveyController::class, 'viewSurvey']);
@@ -28,8 +30,31 @@ Route::prefix('quotas')->group(function () {
     Route::put('/{id}', [QuotaController::class, 'update']);   // Update
     Route::delete('/{id}', [QuotaController::class, 'destroy']); // Soft Delete
 
+
+
+
+    
+
     // Soft Delete Extras
 });
+
+//  
+
+// List
+
+
+
+
+
+Route::get('/suppliers', [SupplierApiController::class, 'index']);
+Route::post('/suppliers/store', [SupplierApiController::class, 'store']);
+Route::get('/suppliers/show/{id}', [SupplierApiController::class, 'show']);
+Route::post('/suppliers/update/{id}', [SupplierApiController::class, 'update']);
+
+// Soft delete
+Route::delete('/suppliers/delete/{id}', [SupplierApiController::class, 'delete']);
+
+
 
 // Public Routes
 Route::post('/register', [AuthController::class, 'register']);
