@@ -6,10 +6,15 @@ use Illuminate\Http\Request;
 
 class QuotaController extends Controller
 {
-    public function index()
-    {
-        return Quota::all();
-    }
+   public function index()
+{
+    return response()->json([
+        'success' => true,
+        'message' => 'Quota list fetched successfully',
+        'data'    => Quota::all()
+    ], 200);
+}
+
 
     /**
      * Create new Quota
