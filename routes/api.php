@@ -8,8 +8,11 @@ use App\Http\Controllers\QualificationController;
 use App\Http\Controllers\QuotaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SupplierApiController;
+use App\Http\Controllers\ClicksController;
 
 // Route::post('/profile_save', [ProfileController::class, 'saveProfile']);
+Route::get('/available-surveys', [ClicksController::class, 'getAvailableSurvey']);
+Route::post('/click-post', [ClicksController::class, 'clickPost']);
 Route::post('/survey/save', [SurveyController::class, 'saveSurvey']);
 Route::get('/survey/{id}', [SurveyController::class, 'viewSurvey']);
 Route::get('/surveys', [SurveyController::class, 'listSurveys']);

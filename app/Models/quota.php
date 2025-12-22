@@ -13,6 +13,7 @@ class Quota extends Model
     protected $fillable = [
         'name',
         'quota',
+        "survey_id",
         'is_active',
         'conditions',
     ];
@@ -22,4 +23,8 @@ class Quota extends Model
         'is_active' => 'boolean',
         'conditions' => 'array',
     ];
+     public function survey()
+    {
+        return $this->belongsTo(Survey::class, 'survey_id');
+    }
 }

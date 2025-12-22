@@ -42,5 +42,9 @@ class Survey extends Model
     protected $casts = [
         'settings' => 'array'
     ];
+     public function quotas()
+    {
+        return $this->hasMany(Quota::class, 'survey_id');
+    }
 }
 
