@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Models\Quota;
+use App\Models\Qualification;
 use Illuminate\Http\Request;
 
 class QuotaController extends Controller
@@ -19,21 +20,63 @@ class QuotaController extends Controller
     /**
      * Create new Quota
      */
+    // public function store(Request $request)
+    // {
+    //     $data = $request->validate([
+    //         'name'        => 'required|string|max:255',
+    //         'quota'       => 'required|integer|min:0',
+    //         'is_active'   => 'boolean',
+    //         'conditions'  => 'nullable|array',
+    //         'conditions.*.QuestionID' => 'required|integer',
+    //         'conditions.*.PreCodes'   => 'nullable|array',
+    //     ]);
+
+    //     $quota = Quota::create($data);
+
+    //     return response()->json($quota, 201);
+    // }
+
     public function store(Request $request)
-    {
-        $data = $request->validate([
-            'name'        => 'required|string|max:255',
-            'quota'       => 'required|integer|min:0',
-            'is_active'   => 'boolean',
-            'conditions'  => 'nullable|array',
-            'conditions.*.QuestionID' => 'required|integer',
-            'conditions.*.PreCodes'   => 'nullable|array',
-        ]);
+{
+    $data = $request->validate([
+        'name'        => 'required|string|max:255',
+        'quota'       => 'required|integer|min:0',
+        //'survey_id'   => 'required|integer',
+        'is_active'   => 'boolean',
+        'conditions' => 'required|array',
 
-        $quota = Quota::create($data);
+        // 🔥 CHANGE HERE
+        'conditions.*.qualification_id' => 'required|exists:qualifications,id',
+        'conditions.*.PreCodes'         => 'nullable|array',
+    ]);
 
-        return response()->json($quota, 201);
+    $finalConditions = [];
+
+    foreach ($data['conditions'] as $cond) {
+
+        $qualification = Qualification::find($cond['qualification_id']);
+
+        $finalConditions[] = [
+            'qualification_id' => $qualification->id,
+            'question_id'      => $qualification->question_id, // ✅ SAME QUESTION
+            'pre_codes'        => $cond['PreCodes'] ?? $qualification->pre_codes,
+        ];
     }
+
+    $quota = Quota::create([
+        'name'       => $data['name'],
+        'quota'      => $data['quota'],
+      //  'survey_id'  => $data['survey_id'],
+        'is_active'  => $data['is_active'] ?? true,
+        'conditions' => $finalConditions,
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Quota created using Qualification questions',
+        'data'    => $quota
+    ], 201);
+}
 
     /**
      * Show a single quota
@@ -50,7 +93,7 @@ class QuotaController extends Controller
     public function update(Request $request, $id)
     {
         $quota = Quota::findOrFail($id);
-
+ 
         $data = $request->validate([
             'name'        => 'string|max:255',
             'quota'       => 'integer|min:0',

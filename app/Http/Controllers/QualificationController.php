@@ -3,6 +3,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Qualification;
+use App\Models\Question;
+
 
 class QualificationController extends Controller
 {
@@ -11,8 +13,15 @@ class QualificationController extends Controller
     {
         $req->validate([
             'Name' => 'required',
-            'QuestionID' => 'required',
+           'QuestionID' => 'required'
+
         ]);
+           if (!Question::where('id', $req->QuestionID)->exists()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Selected question does not exist'
+        ], 422);
+    }
 
         $qualification = Qualification::create([
             'name'                           => $req->Name,

@@ -22,4 +22,8 @@ class Qualification extends Model
         'pre_codes' => 'array',
         'is_active' => 'boolean'
     ];
+     public function question()
+    {
+        return $this->belongsTo(Question::class);
+    }
 }
