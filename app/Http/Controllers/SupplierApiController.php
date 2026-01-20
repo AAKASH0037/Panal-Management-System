@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Http\Controllers;
-
 use App\Http\Controllers\Controller;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
@@ -82,7 +81,7 @@ class SupplierApiController extends Controller
     public function forceDelete($id)
     {
         Supplier::onlyTrashed()->findOrFail($id)->forceDelete();
-
+                                      
         return response()->json([
             'status' => true,
             'message' => 'Supplier Permanently Deleted'

@@ -9,6 +9,7 @@ use App\Http\Controllers\QuotaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SupplierApiController;
 use App\Http\Controllers\ClicksController;
+use App\Http\Controllers\SurveyCampaignApiController;
 
 // Route::post('/profile_save', [ProfileController::class, 'saveProfile']);
 Route::get('/available-surveys', [ClicksController::class, 'getAvailableSurvey']);
@@ -70,4 +71,27 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', function(Request $request) {
         return $request->user();
     });
+});
+// new  design code 
+   Route::get('/countries', [SurveyCampaignApiController::class, 'country']);
+    Route::get('/languages', [SurveyCampaignApiController::class, 'language']);
+Route::prefix('survey/campaigns')->group(function () {
+    Route::get('campaign_show', [SurveyCampaignApiController::class, 'show']);
+    Route::get('/', [SurveyCampaignApiController::class, 'index']);
+    Route::post('/', [SurveyCampaignApiController::class, 'storeBasics']);
+
+    // 🔹 STATIC FIRST
+    Route::get('trash/list', [SurveyCampaignApiController::class, 'trash']);
+
+    // 🔹 DYNAMIC AFTER
+    Route::post('{id}/panels', [SurveyCampaignApiController::class, 'storePanels']);
+    Route::post('{id}/redirects', [SurveyCampaignApiController::class, 'storeRedirects']);
+    Route::get('{id}/review', [SurveyCampaignApiController::class, 'review']);
+    Route::post('{id}/launch', [SurveyCampaignApiController::class, 'launch']);
+
+    
+    Route::delete('{id}', [SurveyCampaignApiController::class, 'destroy']);
+
+    Route::post('{id}/restore', [SurveyCampaignApiController::class, 'restore']);
+    Route::delete('{id}/force', [SurveyCampaignApiController::class, 'forceDelete']);
 });

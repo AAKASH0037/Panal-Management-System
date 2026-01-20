@@ -83,7 +83,7 @@ class QuotaController extends Controller
      */
     public function show($id)
     {
-        $quota = Quota::findOrFail($id);
+        $quota = Quota::findOrFail($id);    
         return response()->json($quota);
     }
 

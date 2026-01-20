@@ -93,7 +93,7 @@ class QualificationController extends Controller
             return response()->json(['error' => 'Not found'], 404);
         }
 
-        $q->delete();
+        $q->delete();                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
 
         return response()->json([
             'success' => true,
