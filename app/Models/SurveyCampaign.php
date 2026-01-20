@@ -12,7 +12,7 @@ class SurveyCampaign extends Model
     protected $table = 'survey_campaigns';
 
     protected $fillable = [
-        'name',
+         'campaignName',
         'country_id',
         'language_id',
         'loi',

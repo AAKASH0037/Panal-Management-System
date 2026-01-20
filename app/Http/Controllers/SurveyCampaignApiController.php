@@ -31,7 +31,7 @@ class SurveyCampaignApiController extends Controller
  public function storeBasics(Request $request)
 {
     $validated = $request->validate([
-        'name' => 'nullable|string|max:255',
+      'campaignName' => 'nullable|string|max:255',
         'country_id' => 'required|integer|exists:countries,id',
         'language_id' => 'required|integer|exists:languages,id',
         'loi' => 'required|integer|min:1',
