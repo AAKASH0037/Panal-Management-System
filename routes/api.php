@@ -75,6 +75,7 @@ Route::middleware('auth:sanctum')->group(function () {
 // new  design code 
    Route::get('/countries', [SurveyCampaignApiController::class, 'country']);
     Route::get('/languages', [SurveyCampaignApiController::class, 'language']);
+  Route::get('/panel-providers', [SurveyCampaignApiController::class, 'getAllPanels']);
 Route::prefix('survey/campaigns')->group(function () {
     Route::get('campaign_show', [SurveyCampaignApiController::class, 'show']);
     Route::get('/', [SurveyCampaignApiController::class, 'index']);

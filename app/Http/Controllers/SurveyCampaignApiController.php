@@ -61,8 +61,9 @@ class SurveyCampaignApiController extends Controller
         $validated = $request->validate([
             'panels' => 'required|array',
             'panels.*.panel_provider_id' => 'required|exists:survey_panel_providers,id',
-            'panels.*.target_completes' => 'required|integer|min:1',
+            'panels.*.target_completes' => 'required|integer|min:1',//// Max Complete
             'panels.*.cpi' => 'required|numeric|min:0',
+            'panels.*.entry_url' => 'required|url', 
         ]);
 
         DB::transaction(function () use ($campaign, $validated) {
@@ -76,6 +77,7 @@ class SurveyCampaignApiController extends Controller
                     'panel_provider_id' => $panel['panel_provider_id'],
                     'target_completes' => $panel['target_completes'],
                     'cpi' => $panel['cpi'],
+                    'entry_url' => $panel['entry_url'],     
                     'status' => 'active'
                 ]);
             }
@@ -86,6 +88,18 @@ class SurveyCampaignApiController extends Controller
             'message' => 'Panels saved'
         ]);
     }
+
+  public function getAllPanels()
+{
+       $panels = SurveyPanelProvider::select('id', 'name')->get();
+
+    return response()->json([
+        'status' => true,
+        'count' => $panels->count(),
+        'data' => $panels
+    ]);
+}
+
 
     /* =====================================================
      * SAVE REDIRECT URLS

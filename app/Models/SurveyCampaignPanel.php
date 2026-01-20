@@ -17,6 +17,7 @@ class SurveyCampaignPanel extends Model
         'target_completes',
         'achieved_completes',
         'cpi',
+         'entry_url',
         'status'
     ];
 
