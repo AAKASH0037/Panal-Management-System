@@ -107,25 +107,29 @@ public function updatePanel(Request $request, $campaignId, $providerId)
 } 
  public function finalSubmit(Request $request, int $campaignId)
     {
-        $request->validate([
-            'panel.panel_provider_id' => 'required|exists:survey_panel_providers,id',
-            'panel.target_completes'  => 'required|integer|min:1',
-            'panel.cpi'               => 'required|numeric|min:0',
-            'panel.entry_url'         => 'required|url',
+      //dd("jj");
+      $request->validate([
+    'panel.panel_provider_id' => 'required|exists:survey_panel_providers,id',
+    'panel.target_completes'  => 'required|integer|min:1',
+    'panel.cpi'               => 'required|numeric|min:0',
+    'panel.entry_url'         => 'required|url',
 
-            'qualifications'                  => 'array',
-            'qualifications.*.qs_id'          => 'required|integer',
-            'qualifications.*.option_ids'     => 'required|array',
+    'qualifications' => 'array',
+    'qualifications.*.qs_id' => 'required|integer',
+    'qualifications.*.option_ids' => 'required|array',
 
-            'quotas'                          => 'array',
-            'quotas.*.qs_id'                  => 'required|integer',
-            'quotas.*.opt_id'                 => 'required|integer',
-            'quotas.*.quota_name'             => 'required|string',
-            'quotas.*.target'                 => 'required|integer|min:1',
+    'quotas' => 'array',
+    'quotas.*.quota_name' => 'required|string',
+    'quotas.*.target' => 'required|integer|min:1',
 
-            'skip' => 'boolean'
-        ]);
+    'quotas.*.conditions' => 'required|array|min:1',
+    'quotas.*.conditions.*.qs_id' => 'required|integer',
+    'quotas.*.conditions.*.opt_id' => 'required|integer',
 
+    'skip' => 'boolean'
+]);
+
+   //d("hh");
         DB::transaction(function () use ($request, $campaignId) {
 
             /* 1️⃣ SAVE / UPDATE PANEL (ALWAYS) */
@@ -150,6 +154,7 @@ public function updatePanel(Request $request, $campaignId, $providerId)
             );
 
             /* 4️⃣ SAVE QUOTAS */
+          //dd("hh");
             $this->saveQuotas(
                 $campaignId,
                 $panel->panel_provider_id,
@@ -171,22 +176,19 @@ public function updatePanel(Request $request, $campaignId, $providerId)
     /* =========================================
      * SAVE PANEL (PRIVATE)
      * ========================================= */
-    private function savePanel(int $campaignId, array $panelData, bool $skip = false)
-    {
-        return SurveyCampaignPanel::updateOrCreate(
-            [
-                'campaign_id' => $campaignId,
-                'panel_provider_id' => $panelData['panel_provider_id']
-            ],
-            [
-                'target_completes' => $panelData['target_completes'],
-                'cpi'              => $panelData['cpi'],
-                'entry_url'        => $panelData['entry_url'],
-                'status'           => 'active',
-                'is_skipped'       => $skip ? 1 : 0
-            ]
-        );
-    }
+   private function savePanel(int $campaignId, array $panelData, bool $skip = false)
+{
+    return SurveyCampaignPanel::create([
+        'campaign_id'       => $campaignId,
+        'panel_provider_id' => $panelData['panel_provider_id'],
+        'target_completes'  => $panelData['target_completes'],
+        'cpi'               => $panelData['cpi'],
+        'entry_url'         => $panelData['entry_url'],
+        'status'            => 'active',
+        'is_skipped'        => $skip ? 1 : 0
+    ]);
+}
+
 
     /* =========================================
      * SAVE QUALIFICATIONS (PRIVATE)
@@ -196,10 +198,10 @@ public function updatePanel(Request $request, $campaignId, $providerId)
         int $panelProviderId,
         array $qualifications
     ) {
-        DB::table('survey_campaign_qualifications')
-            ->where('campaign_id', $campaignId)
-            ->where('panel_provider_id', $panelProviderId)
-            ->delete();
+        // DB::table('survey_campaign_qualifications')
+        //     ->where('campaign_id', $campaignId)
+        //     ->where('panel_provider_id', $panelProviderId)
+        //     ->delete();
 
         foreach ($qualifications as $q) {
             foreach ($q['option_ids'] as $optId) {
@@ -218,26 +220,30 @@ public function updatePanel(Request $request, $campaignId, $providerId)
     /* =========================================
      * SAVE QUOTAS (PRIVATE)
      * ========================================= */
-    private function saveQuotas(
-        int $campaignId,
-        int $panelProviderId,
-        array $quotas
-    ) {
-        SurveyCampaignQuota::where('campaign_id', $campaignId)
-            ->where('panel_provider_id', $panelProviderId)
-            ->delete();
+private function saveQuotas(
+    int $campaignId,
+    int $panelProviderId,
+    array $quotas
+) {
+    // SurveyCampaignQuota::where('campaign_id', $campaignId)
+    //     ->where('panel_provider_id', $panelProviderId)
+    //     ->delete();
 
-        foreach ($quotas as $quota) {
+    foreach ($quotas as $quota) {
+        foreach ($quota['conditions'] as $condition) {
             SurveyCampaignQuota::create([
                 'campaign_id'       => $campaignId,
                 'panel_provider_id' => $panelProviderId,
-                'qs_id'             => $quota['qs_id'],
-                'opt_id'            => $quota['opt_id'],
-                'quota_name'        => $quota['quota_name'],
-                'target'            => $quota['target'],
+                'qs_id'             => $condition['qs_id'],
+                'opt_id'            => $condition['opt_id'],
+                'quota_name'        => $quota['quota_name'], // 👈 parent level
+                'target'            => $quota['target'],     // 👈 parent level
             ]);
         }
     }
+}
+
+
 }
 
 
