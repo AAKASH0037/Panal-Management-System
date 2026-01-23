@@ -40,4 +40,11 @@ class SurveyCampaign extends Model
     {
         return $this->hasOne(SurveyCampaignRedirect::class, 'campaign_id');
     }
+
+public function quotas()
+{
+    return $this->hasMany(SurveyCampaignQuota::class, 'campaign_id');
+}
+
+
 }

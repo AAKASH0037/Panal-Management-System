@@ -10,7 +10,7 @@ use App\Models\SurveyCampaignRedirect;
 use App\Models\SurveyPanelProvider;
 use App\Models\Country;
 use App\Models\Language;
-
+use App\Models\SurveyQualificationQuestion;
 
 class SurveyCampaignApiController extends Controller
 {
@@ -54,52 +54,7 @@ class SurveyCampaignApiController extends Controller
     /* =====================================================
      * ADD / UPDATE PANELS
      * ===================================================== */
-    public function storePanels(Request $request, $campaignId)
-    {
-        $campaign = SurveyCampaign::findOrFail($campaignId);
-
-        $validated = $request->validate([
-            'panels' => 'required|array',
-            'panels.*.panel_provider_id' => 'required|exists:survey_panel_providers,id',
-            'panels.*.target_completes' => 'required|integer|min:1',//// Max Complete
-            'panels.*.cpi' => 'required|numeric|min:0',
-            'panels.*.entry_url' => 'required|url', 
-        ]);
-
-        DB::transaction(function () use ($campaign, $validated) {
-
-            // Soft delete old panels
-            $campaign->panels()->delete();
-
-            foreach ($validated['panels'] as $panel) {
-                SurveyCampaignPanel::create([
-                    'campaign_id' => $campaign->id,
-                    'panel_provider_id' => $panel['panel_provider_id'],
-                    'target_completes' => $panel['target_completes'],
-                    'cpi' => $panel['cpi'],
-                    'entry_url' => $panel['entry_url'],     
-                    'status' => 'active'
-                ]);
-            }
-        });
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Panels saved'
-        ]);
-    }
-
-  public function getAllPanels()
-{
-       $panels = SurveyPanelProvider::select('id', 'name')->get();
-
-    return response()->json([
-        'status' => true,
-        'count' => $panels->count(),
-        'data' => $panels
-    ]);
-}
-
+   
 
     /* =====================================================
      * SAVE REDIRECT URLS
@@ -251,7 +206,7 @@ public function show(Request $request)
 
     /* =====================================================
      * FORCE DELETE
-     * ===================================================== */
+     * ===================================================== */ 
     public function forceDelete($campaignId)
     {
         SurveyCampaign::withTrashed()->findOrFail($campaignId)->forceDelete();
@@ -274,4 +229,43 @@ public function show(Request $request)
             'data' => Country::all()
         ]);
     }
+
+    public function getQuestionOptions()
+    {
+       //d('API HIT');
+        $questions = SurveyQualificationQuestion::with([
+                'options' => function ($q) {
+                    $q->whereNull('deleted_at')
+                    ->select('opt_id', 'qs_id', 'option_value');
+                }
+            ])
+            ->whereNull('deleted_at')
+            ->select('qs_id', 'question', 'label', 'type')
+            ->get();
+
+        $data = $questions->map(function ($q) {
+            return [
+                'qs_id' => $q->qs_id,
+                'question' => $q->label ?? $q->question, // ✅ FIX
+                'type' => $q->type,
+                'options' => $q->options->map(function ($opt) {
+                    return [
+                        'opt_id' => $opt->opt_id,   
+                        'option_value' => $opt->option_value
+                    ];
+                })->values()
+            ];
+        })->values();
+
+        return response()->json([
+            'status' => true,
+            'data' => $data
+        ]);
+    }
+
+
+
 }   
+
+
+

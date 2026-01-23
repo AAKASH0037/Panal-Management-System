@@ -32,4 +32,12 @@ class SurveyCampaignPanel extends Model
     {
         return $this->belongsTo(SurveyPanelProvider::class, 'panel_provider_id');
     }
+public function quotas()
+{
+    return $this->hasMany(
+        SurveyCampaignQuota::class,
+        'panel_provider_id',
+        'panel_provider_id'
+    );
+}
 }
