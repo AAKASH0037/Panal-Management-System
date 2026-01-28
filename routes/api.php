@@ -80,28 +80,56 @@ use App\Http\Controllers\PanelController;
     Route::get('/languages', [SurveyCampaignApiController::class, 'language']);
  Route::get('/panel-providers', [PanelController::class, 'getAllPanels']);
   Route::get('/survey/question-options', [SurveyCampaignApiController::class, 'getQuestionOptions']);
-Route::prefix('survey/campaigns')->group(function () {
-    Route::get('campaign_show', [SurveyCampaignApiController::class, 'show']);
-    Route::get('/', [SurveyCampaignApiController::class, 'index']);
-    Route::post('/', [SurveyCampaignApiController::class, 'storeBasics']);
 
-    // 🔹 STATIC FIRST
+  Route::get(
+    '/campaigns/{campaignId}/panels',
+    [PanelController::class, 'getCampaignPanels']
+);
+Route::prefix('survey/campaigns')->group(function () {
+
+    /* =========================
+     * STATIC ROUTES (FIRST)
+     * ========================= */
+    Route::get('campaign_show', [SurveyCampaignApiController::class, 'show']);
     Route::get('trash/list', [SurveyCampaignApiController::class, 'trash']);
 
-    // 🔹 DYNAMIC AFTER
-    Route::put('{campaignId}/panels/{providerId}', [PanelController::class, 'updatePanel']);
-    Route::post('{id}/panels', [PanelController::class, 'storePanels']);
-    Route::post('{campaignId}/final-submit',
-    [PanelController::class, 'finalSubmit']
-);
+    /* =========================
+     * FINAL SUBMIT / UPDATE (MOST SPECIFIC)
+     * ========================= */
+    Route::post(
+        '{campaignId}/final-submit',
+        [PanelController::class, 'finalSubmit']
+    );
+
+    Route::put(
+        '{campaignId}/panels/{panelProviderId}/final-update',
+        [PanelController::class, 'finalUpdate']
+    );
+
+    /* =========================
+     * PANEL ROUTES
+     * ========================= */
+    Route::post(
+        '{campaignId}/panels',
+        [PanelController::class, 'storePanels']
+    );
+
+    Route::put(
+        '{campaignId}/panels/{providerId}',
+        [PanelController::class, 'updatePanel']
+    );
+
+    /* =========================
+     * CAMPAIGN CORE
+     * ========================= */
+    Route::get('/', [SurveyCampaignApiController::class, 'index']);
+    Route::post('/', [SurveyCampaignApiController::class, 'storeBasics']);
 
     Route::post('{id}/redirects', [SurveyCampaignApiController::class, 'storeRedirects']);
     Route::get('{id}/review', [SurveyCampaignApiController::class, 'review']);
     Route::post('{id}/launch', [SurveyCampaignApiController::class, 'launch']);
 
-    
     Route::delete('{id}', [SurveyCampaignApiController::class, 'destroy']);
-
-    Route::post('{id}/restore', [SurveyCampaignApiController::class, 'restore']);    
+    Route::post('{id}/restore', [SurveyCampaignApiController::class, 'restore']);
     Route::delete('{id}/force', [SurveyCampaignApiController::class, 'forceDelete']);
 });
