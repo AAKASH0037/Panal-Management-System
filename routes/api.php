@@ -96,6 +96,12 @@ Route::prefix('survey/campaigns')->group(function () {
     /* =========================
      * FINAL SUBMIT / UPDATE (MOST SPECIFIC)
      * ========================= */
+
+  Route::patch(
+        '{campaignId}/panels/{panelProviderId}/status',
+        [PanelController::class, 'togglePanelStatus']
+    );
+
     Route::post(
         '{campaignId}/final-submit',
         [PanelController::class, 'finalSubmit']
@@ -109,19 +115,16 @@ Route::prefix('survey/campaigns')->group(function () {
     /* =========================
      * PANEL ROUTES
      * ========================= */
-    Route::post(
-        '{campaignId}/panels',
-        [PanelController::class, 'storePanels']
-    );
+   
 
-    Route::put(
-        '{campaignId}/panels/{providerId}',
-        [PanelController::class, 'updatePanel']
-    );
+
+
+  
 
     /* =========================
      * CAMPAIGN CORE
      * ========================= */
+
     Route::get('/', [SurveyCampaignApiController::class, 'index']);
     Route::post('/', [SurveyCampaignApiController::class, 'storeBasics']);
 

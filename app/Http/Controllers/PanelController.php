@@ -453,7 +453,31 @@ private function updateQuotas(
     });
 }
 
+public function togglePanelStatus(
+    int $campaignId,
+    int $panelProviderId
+) {
+    $panel = SurveyCampaignPanel::where('campaign_id', $campaignId)
+        ->where('panel_provider_id', $panelProviderId)
+        ->whereNull('deleted_at')
+        ->firstOrFail();
 
+    // Toggle status
+    $newStatus = $panel->status === 'active' ? 'paused' : 'active';
+
+    $panel->update([
+        'status' => $newStatus
+    ]);
+
+    return response()->json([
+        'status' => true,
+        'message' => "Panel {$newStatus} successfully",
+        'data' => [
+            'panel_provider_id' => $panelProviderId,
+            'status' => $newStatus
+        ]
+    ]);
+}
 
 }
 
