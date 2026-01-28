@@ -11,90 +11,7 @@ use App\Models\SurveyQualificationQuestion;
 use App\Models\SurveyCampaignQuota;
 class PanelController extends Controller
 {
-     public function storePanels(Request $request, $campaignId)
-    {
-        $campaign = SurveyCampaign::findOrFail($campaignId);
-
-        $validated = $request->validate([
-            'panels' => 'required|array',
-            'panels.*.panel_provider_id' => 'required|exists:survey_panel_providers,id',
-            'panels.*.target_completes' => 'required|integer|min:1',//// Max Complete
-            'panels.*.cpi' => 'required|numeric|min:0',
-            'panels.*.entry_url' => 'required|url', 
-        ]);
-
-        DB::transaction(function () use ($campaign, $validated) {
-
-            // Soft delete old panels
-            $campaign->panels()->delete();
-
-            foreach ($validated['panels'] as $panel) {
-                SurveyCampaignPanel::create([   
-                    'campaign_id' => $campaign->id,
-                    'panel_provider_id' => $panel['panel_provider_id'],
-                    'target_completes' => $panel['target_completes'],
-                    'cpi' => $panel['cpi'],
-                    'entry_url' => $panel['entry_url'],     
-                    'status' => 'active'
-                ]);
-            }
-        });
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Panels saved'
-        ]);
-    }
-
-public function updatePanel(Request $request, $campaignId, $providerId)
-{
-    // 🔹 OLD panel find (old providerId from URL)
-    $panel = SurveyCampaignPanel::where('campaign_id', $campaignId)
-        ->where('panel_provider_id', $providerId)
-        ->whereNull('deleted_at')
-        ->firstOrFail();
-
-    // 🔹 Payload extract (support panels[0] OR flat)
-    $data = $request->has('panels')
-        ? $request->input('panels.0')
-        : $request->all();
-
-    // 🔹 Validation
-    $validated = validator($data, [
-        'panel_provider_id' => 'sometimes|exists:survey_panel_providers,id',
-        'target_completes'  => 'sometimes|integer|min:1',
-        'cpi'               => 'sometimes|numeric|min:0',
-        'entry_url'         => 'sometimes|url',
-        'status'            => 'sometimes|in:active,paused'
-    ])->validate();
-
-    // 🔒 OPTIONAL: prevent duplicate provider in same campaign
-    if (
-        isset($validated['panel_provider_id']) &&
-        $validated['panel_provider_id'] != $providerId &&
-        SurveyCampaignPanel::where('campaign_id', $campaignId)
-            ->where('panel_provider_id', $validated['panel_provider_id'])
-            ->whereNull('deleted_at')
-            ->exists()
-    ) {
-        return response()->json([
-            'status' => false,
-            'message' => 'This panel provider already exists in this campaign'
-        ], 422);
-    }
-
-    // 🔹 Update only provided fields
-    $panel->update($validated);
-
-    return response()->json([
-        'status' => true,
-        'message' => 'Panel updated successfully',
-        'data' => $panel
-    ]);
-}
-
-
-
+   
   public function getAllPanels()
 {
        $panels = SurveyPanelProvider::select('id', 'name')->get();
@@ -112,7 +29,19 @@ public function getCampaignPanels($campaignId)
     $panels = SurveyCampaignPanel::with('provider')
         ->where('campaign_id', $campaignId)
         ->whereNull('deleted_at')
-        ->get();
+        ->get()
+        ->map(function ($panel) {
+            return [
+                'id' => $panel->id,
+                'campaign_id' => $panel->campaign_id,
+                'panel_provider_id' => $panel->panel_provider_id,
+                'max_completes' => $panel->is_auto ? 'Auto' : $panel->target_completes,
+                'achieved_completes' => $panel->achieved_completes,
+                'cpi' => $panel->cpi,
+                'status' => $panel->status,
+                'provider' => $panel->provider,
+            ];
+        });
 
     return response()->json([
         'status' => true,
@@ -125,12 +54,13 @@ public function getCampaignPanels($campaignId)
 
 
 
+
  public function finalSubmit(Request $request, int $campaignId)
     {
       //dd("jj");
       $request->validate([
     'panel.panel_provider_id' => 'required|exists:survey_panel_providers,id',
-    'panel.target_completes'  => 'required|integer|min:1',
+    'panel.target_completes'  => 'required',
     'panel.cpi'               => 'required|numeric|min:0',
     'panel.entry_url'         => 'required|url',
 
@@ -196,18 +126,81 @@ public function getCampaignPanels($campaignId)
     /* =========================================
      * SAVE PANEL (PRIVATE)
      * ========================================= */
-   private function savePanel(int $campaignId, array $panelData, bool $skip = false)
+//    private function savePanel(int $campaignId, array $panelData, bool $skip = false)
+// {
+//     return SurveyCampaignPanel::create([
+//         'campaign_id'       => $campaignId,
+//         'panel_provider_id' => $panelData['panel_provider_id'],
+//         'target_completes'  => $panelData['target_completes'],
+//         'cpi'               => $panelData['cpi'],
+//         'entry_url'         => $panelData['entry_url'],
+//         'status'            => 'active',
+//         'is_skipped'        => $skip ? 1 : 0
+//     ]);
+// }
+
+private function savePanel(int $campaignId, array $panelData, bool $skip = false)
 {
-    return SurveyCampaignPanel::create([
-        'campaign_id'       => $campaignId,
-        'panel_provider_id' => $panelData['panel_provider_id'],
-        'target_completes'  => $panelData['target_completes'],
-        'cpi'               => $panelData['cpi'],
-        'entry_url'         => $panelData['entry_url'],
-        'status'            => 'active',
-        'is_skipped'        => $skip ? 1 : 0
-    ]);
+    // 🔹 AUTO detect
+    $isAuto = isset($panelData['target_completes']) &&
+        ($panelData['target_completes'] === 'Auto' || empty($panelData['target_completes']));
+
+    // 🔹 Calculate target completes
+    if ($isAuto) {
+        $targetCompletes = $this->calculateAutoTarget(
+            $campaignId,
+            (float) $panelData['cpi']
+        );
+    } else {
+        $targetCompletes = (int) $panelData['target_completes'];
+    }
+
+    // 🔹 SAVE / UPDATE (IMPORTANT PART)
+    return SurveyCampaignPanel::updateOrCreate(
+        [
+            'campaign_id'       => $campaignId,
+            'panel_provider_id' => $panelData['panel_provider_id'],
+        ],
+        [
+            'target_completes'  => $targetCompletes,
+            'is_auto'           => $isAuto ? 1 : 0,   // ✅ NOW WILL SAVE
+            'cpi'               => $panelData['cpi'],
+            'entry_url'         => $panelData['entry_url'],
+            'status'            => 'active',
+            'achieved_completes'=> 0,
+        ]
+    );
 }
+
+
+
+private function calculateAutoTarget(int $campaignId, float $currentPanelCpi): int
+{
+    $campaign = SurveyCampaign::findOrFail($campaignId);
+
+    // 🔹 All panels (including current one)
+    $panels = SurveyCampaignPanel::where('campaign_id', $campaignId)
+        ->whereNull('deleted_at')
+        ->get();
+
+    // Total CPI (existing panels + current)
+    $totalCpi = $panels->sum('cpi') + $currentPanelCpi;
+
+    if ($totalCpi <= 0) {
+        return 1;
+    }
+
+    // 🔹 Weight based allocation
+    $weight = $currentPanelCpi / $totalCpi;
+
+    $autoTarget = floor($campaign->total_completes * $weight);
+
+    // 🔹 Minimum 1 complete
+    return max(1, (int) $autoTarget);
+}
+
+
+
 
 
     /* =========================================
@@ -269,7 +262,7 @@ private function saveQuotas(
     int $panelProviderId
 ) {
     $request->validate([
-        'panel.target_completes' => 'sometimes|integer|min:1',
+        'panel.target_completes' => 'sometimes',
         'panel.cpi'              => 'sometimes|numeric|min:0',
         'panel.entry_url'        => 'sometimes|url',
         'skip'                   => 'sometimes|boolean',
@@ -324,28 +317,76 @@ private function saveQuotas(
 }
 
 
+// private function updatePanelData(
+//     int $campaignId,
+//     int $panelProviderId,
+//     array $panel
+// ) {
+//     // Restore all soft-deleted records first
+//     SurveyCampaignPanel::withTrashed()
+//         ->where('campaign_id', $campaignId)
+//         ->where('panel_provider_id', $panelProviderId)
+//         ->whereNotNull('deleted_at')
+//         ->restore();
+
+//     // Update ALL matching records (including duplicates)
+//     $updated = SurveyCampaignPanel::where('campaign_id', $campaignId)
+//         ->where('panel_provider_id', $panelProviderId)
+//         ->update([
+//             'target_completes' => $panel['target_completes'],
+//             'cpi'              => $panel['cpi'],
+//             'entry_url'        => $panel['entry_url'],
+//             'updated_at'       => now(),
+//         ]);
+
+//     if ($updated === 0) {
+//         throw new \Exception(
+//             "No panels found for campaign_id={$campaignId} and panel_provider_id={$panelProviderId}"
+//         );
+//     }
+
+//     return $updated; // number of rows updated
+// }
+
+
 private function updatePanelData(
     int $campaignId,
     int $panelProviderId,
     array $panel
 ) {
-    // Restore all soft-deleted records first
+    // 🔹 Restore soft-deleted panels (if any)
     SurveyCampaignPanel::withTrashed()
         ->where('campaign_id', $campaignId)
         ->where('panel_provider_id', $panelProviderId)
         ->whereNotNull('deleted_at')
         ->restore();
 
-    // Update ALL matching records (including duplicates)
+    // 🔹 AUTO detect
+    $isAuto = isset($panel['target_completes']) &&
+        ($panel['target_completes'] === 'Auto' || empty($panel['target_completes']));
+
+    // 🔹 Calculate target completes
+    if ($isAuto) {
+        $targetCompletes = $this->calculateAutoTarget(
+            $campaignId,
+            (float) $panel['cpi']
+        );
+    } else {
+        $targetCompletes = (int) $panel['target_completes'];
+    }
+
+    // 🔹 UPDATE panel and capture affected rows
     $updated = SurveyCampaignPanel::where('campaign_id', $campaignId)
         ->where('panel_provider_id', $panelProviderId)
         ->update([
-            'target_completes' => $panel['target_completes'],
+            'target_completes' => $targetCompletes,
+            'is_auto'          => $isAuto ? 1 : 0,
             'cpi'              => $panel['cpi'],
             'entry_url'        => $panel['entry_url'],
             'updated_at'       => now(),
         ]);
 
+    // 🔹 Safety check
     if ($updated === 0) {
         throw new \Exception(
             "No panels found for campaign_id={$campaignId} and panel_provider_id={$panelProviderId}"
@@ -354,7 +395,6 @@ private function updatePanelData(
 
     return $updated; // number of rows updated
 }
-
 
 
 

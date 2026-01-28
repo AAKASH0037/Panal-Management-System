@@ -15,6 +15,7 @@ class SurveyCampaignPanel extends Model
         'campaign_id',
         'panel_provider_id',
         'target_completes',
+            'is_auto', 
         'achieved_completes',
         'cpi',
          'entry_url',
