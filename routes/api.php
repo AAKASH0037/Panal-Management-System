@@ -111,7 +111,10 @@ Route::prefix('survey/campaigns')->group(function () {
         '{campaignId}/panels/{panelProviderId}/final-update',
         [PanelController::class, 'finalUpdate']
     );
-
+Route::post(
+        '{campaignId}/panel-provider/{panelProviderId}/final-delete',
+        [PanelController::class, 'finalDelete']
+    );
     /* =========================
      * PANEL ROUTES
      * ========================= */

@@ -409,7 +409,7 @@ private function updateQualifications(
 
             DB::table('survey_campaign_qualifications')->updateOrInsert(
                 [
-                    'campaign_id'       => $campaignId,
+                    'campaign_id'       => $campaignId, 
                     'panel_provider_id' => $panelProviderId,
                     'qs_id'             => $q['qs_id'],
                     'opt_id'            => $optId, // ✅ integer value
@@ -453,6 +453,102 @@ private function updateQuotas(
     });
 }
 
+public function finalDelete(
+    Request $request,
+    int $campaignId,
+    int $panelProviderId
+) {
+    $request->validate([
+        'panel'           => 'sometimes|array',
+        'qualifications'  => 'sometimes|array',
+        'quotas'          => 'sometimes|array',
+        'skip'            => 'sometimes|boolean',
+    ]);
+
+    $skip = (bool) $request->input('skip');
+
+    DB::transaction(function () use ($request, $campaignId, $panelProviderId, $skip) {
+
+        if ($request->filled('panel')) {
+            $this->softDeletePanel($campaignId, $panelProviderId);
+        }
+
+        if ($skip) {
+            SurveyCampaign::where('id', $campaignId)
+                ->update(['status' => 'panel_deleted']);
+            return;
+        }
+
+        if ($request->filled('qualifications')) {
+            $this->softDeleteQualifications(
+                $campaignId,
+                $panelProviderId,
+                $request->qualifications
+            );
+        }
+
+        if ($request->filled('quotas')) {
+            $this->softDeleteQuotas(
+                $campaignId,
+                $panelProviderId,
+                $request->quotas
+            );
+        }
+
+        SurveyCampaign::where('id', $campaignId)
+            ->update(['status' => 'deleted']);
+    });
+
+    return response()->json([
+        'status'  => true,
+        'message' => 'Soft deleted successfully'
+    ]);
+}
+
+
+private function softDeletePanel(
+    int $campaignId,
+    int $panelProviderId
+) {
+    SurveyCampaignPanel::where('campaign_id', $campaignId)
+        ->where('panel_provider_id', $panelProviderId)
+        ->delete(); // ✅ soft delete
+}
+
+
+private function softDeleteQualifications(
+    int $campaignId,
+    int $panelProviderId,
+    array $qualifications
+) {
+    foreach ($qualifications as $q) {
+        
+        SurveyQualificationQuestion::where('campaign_id', $campaignId)
+            ->where('panel_provider_id', $panelProviderId)
+            ->where('qs_id', $q['qs_id'])
+            ->whereIn('opt_id', $q['option_ids'])
+            ->delete(); // ✅ soft delete
+    }
+}
+private function softDeleteQuotas(
+    int $campaignId,
+    int $panelProviderId,
+    array $quotas
+) {
+    foreach ($quotas as $quota) {
+        foreach ($quota['conditions'] as $condition) {
+            SurveyCampaignQuota::where([
+                'campaign_id'       => $campaignId,
+                'panel_provider_id' => $panelProviderId,
+                'quota_name'        => $quota['quota_name'],
+                'qs_id'             => $condition['qs_id'],
+                'opt_id'            => $condition['opt_id'],
+            ])->delete(); // ✅ soft delete
+        }
+    }
+}
+
+
 public function togglePanelStatus(
     int $campaignId,
     int $panelProviderId
@@ -470,7 +566,7 @@ public function togglePanelStatus(
     ]);
 
     return response()->json([
-        'status' => true,
+        'status' => true,       
         'message' => "Panel {$newStatus} successfully",
         'data' => [
             'panel_provider_id' => $panelProviderId,
