@@ -45,6 +45,6 @@ public function quotas()
 {
     return $this->hasMany(SurveyCampaignQuota::class, 'campaign_id');
 }
-
+  
 
 }

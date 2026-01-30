@@ -11,6 +11,7 @@ use App\Http\Controllers\SupplierApiController;
 use App\Http\Controllers\ClicksController;
 use App\Http\Controllers\SurveyCampaignApiController;
 use App\Http\Controllers\PanelController;
+use App\Http\Controllers\CampaignReviewApiController;
 
 // Route::post('/profile_save', [ProfileController::class, 'saveProfile']);
 // Route::get('/available-surveys', [ClicksController::class, 'getAvailableSurvey']);
@@ -78,6 +79,9 @@ use App\Http\Controllers\PanelController;
 
    Route::get('/countries', [SurveyCampaignApiController::class, 'country']);
     Route::get('/languages', [SurveyCampaignApiController::class, 'language']);
+    Route::get('/campaigns/{id}/review', [CampaignReviewApiController::class, 'review']);
+Route::post('/campaigns/{id}/launch', [CampaignReviewApiController::class, 'launch']);
+
  Route::get('/panel-providers', [PanelController::class, 'getAllPanels']);
   Route::get('/survey/question-options', [SurveyCampaignApiController::class, 'getQuestionOptions']);
 
@@ -132,8 +136,6 @@ Route::post(
     Route::post('/', [SurveyCampaignApiController::class, 'storeBasics']);
 
     Route::post('{id}/redirects', [SurveyCampaignApiController::class, 'storeRedirects']);
-    Route::get('{id}/review', [SurveyCampaignApiController::class, 'review']);
-    Route::post('{id}/launch', [SurveyCampaignApiController::class, 'launch']);
 
     Route::delete('{id}', [SurveyCampaignApiController::class, 'destroy']);
     Route::post('{id}/restore', [SurveyCampaignApiController::class, 'restore']);
