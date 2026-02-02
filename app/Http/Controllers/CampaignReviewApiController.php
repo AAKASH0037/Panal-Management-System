@@ -46,28 +46,30 @@ class CampaignReviewApiController extends Controller
     }
 
     public function launch($id)
-    {
-        $campaign = SurveyCampaign::with('panels')->findOrFail($id);
+{
+    $campaign = SurveyCampaign::with('panels')->findOrFail($id);
 
-        if (
-            empty($campaign->campaignName) ||
-            empty($campaign->country) ||
-            empty($campaign->loi) ||
-            empty($campaign->ir) ||
-            $campaign->panels->count() === 0
-        ) {
-            return response()->json([
-                'message' => 'Campaign is incomplete'
-            ], 422);
-        }
-
-        $campaign->update([
-            'status'      => 'live',
-            'launched_at' => now()
-        ]);
-
+    if (
+        empty($campaign->campaignName) ||
+        empty($campaign->country_id) ||
+        empty($campaign->loi) ||
+        empty($campaign->ir) ||
+        empty($campaign->total_completes) || 
+        $campaign->panels->count() === 0
+    ) {
         return response()->json([
-            'message' => 'Campaign launched successfully'
-        ]);
+            'message' => 'Campaign is incomplete'
+        ], 422);
     }
+
+    $campaign->update([
+        'status'      => 'active', 
+        'launched_at' => now()
+    ]);
+
+    return response()->json([
+        'message' => 'Campaign launched successfully'
+    ]);
+}
+
 }
