@@ -12,6 +12,7 @@ use App\Http\Controllers\ClicksController;
 use App\Http\Controllers\SurveyCampaignApiController;
 use App\Http\Controllers\PanelController;
 use App\Http\Controllers\CampaignReviewApiController;
+use App\Http\Controllers\SurveyPanelProviderApiController;
 
 // Route::post('/profile_save', [ProfileController::class, 'saveProfile']);
 // Route::get('/available-surveys', [ClicksController::class, 'getAvailableSurvey']);
@@ -141,3 +142,15 @@ Route::post(
     Route::post('{id}/restore', [SurveyCampaignApiController::class, 'restore']);
     Route::delete('{id}/force', [SurveyCampaignApiController::class, 'forceDelete']);
 });
+// work   in   panel  provider  
+Route::post(
+    '/panel-provider/save',
+    [SurveyPanelProviderApiController::class, 'store']
+);
+Route::put('/survey-panel-providers/{provider}', [SurveyPanelProviderApiController::class, 'update']);
+
+// routes/api.php
+Route::get('/panel-providers', [SurveyPanelProviderApiController::class, 'index']);
+Route::delete('/survey-panel-providers/{provider}', [SurveyPanelProviderApiController::class, 'deletePanel']);
+
+

@@ -11,7 +11,13 @@ class SurveyPanelProvider extends Model
 
     protected $table = 'survey_panel_providers';
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name','panel_id',
+        'country_id',
+        'success_url',
+        'terminate_url',
+        'overquota_url',
+        'quality_fail_url',
+        'status'];
 
     protected $dates = ['deleted_at'];
 
@@ -19,4 +25,11 @@ class SurveyPanelProvider extends Model
     {
         return $this->hasMany(SurveyCampaignPanel::class, 'panel_provider_id');
     }
+    // SurveyPanelProvider.php
+public function country()
+{
+    return $this->belongsTo(Country::class, 'country_id');
 }
+
+}
+
