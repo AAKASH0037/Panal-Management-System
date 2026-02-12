@@ -40,17 +40,20 @@ public function storeBasics(Request $request)
         'total_completes' => 'required|integer|min:1',
     ]);
 
-    if (!empty($validated['id'])) {
+    // ✅ Check using request()->filled()
+    if ($request->filled('id')) {
 
-        // 🔹 UPDATE CASE
-        $campaign = SurveyCampaign::findOrFail($validated['id']);
+        $campaign = SurveyCampaign::findOrFail($request->id);
+
+        // id ko update data me include mat karo
+        unset($validated['id']);
+
         $campaign->update($validated);
 
         $message = 'Campaign updated successfully';
 
     } else {
 
-        // 🔹 CREATE CASE
         $campaign = SurveyCampaign::create([
             ...$validated,
             'status' => 'draft',
@@ -65,6 +68,7 @@ public function storeBasics(Request $request)
         'data' => $campaign
     ]);
 }
+
 
 
     /* =====================================================
