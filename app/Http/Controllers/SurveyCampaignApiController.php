@@ -28,10 +28,11 @@ class SurveyCampaignApiController extends Controller
     /* =====================================================
      * CREATE CAMPAIGN (BASICS)
      * ===================================================== */
- public function storeBasics(Request $request)
+public function storeBasics(Request $request)
 {
     $validated = $request->validate([
-      'campaignName' => 'nullable|string|max:255',
+        'id' => 'nullable|integer|exists:survey_campaigns,id',
+        'campaignName' => 'nullable|string|max:255',
         'country_id' => 'required|integer|exists:countries,id',
         'language_id' => 'required|integer|exists:languages,id',
         'loi' => 'required|integer|min:1',
@@ -39,17 +40,32 @@ class SurveyCampaignApiController extends Controller
         'total_completes' => 'required|integer|min:1',
     ]);
 
-    $campaign = SurveyCampaign::create([
-        ...$validated,
-        'status' => 'draft',
-    ]);
+    if (!empty($validated['id'])) {
+
+        // 🔹 UPDATE CASE
+        $campaign = SurveyCampaign::findOrFail($validated['id']);
+        $campaign->update($validated);
+
+        $message = 'Campaign updated successfully';
+
+    } else {
+
+        // 🔹 CREATE CASE
+        $campaign = SurveyCampaign::create([
+            ...$validated,
+            'status' => 'draft',
+        ]);
+
+        $message = 'Campaign created successfully';
+    }
 
     return response()->json([
         'status' => true,
-        'message' => 'Campaign created',
-        'campaign_id' => $campaign->id,
-    ], 201);
+        'message' => $message,
+        'data' => $campaign
+    ]);
 }
+
 
     /* =====================================================
      * ADD / UPDATE PANELS
