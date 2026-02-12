@@ -30,25 +30,27 @@ class SurveyCampaignApiController extends Controller
      * ===================================================== */
 public function storeBasics(Request $request)
 {
-    $validated = $request->validate([
-        'id' => 'nullable|integer|exists:survey_campaigns,id',
-        'campaignName' => 'nullable|string|max:255',
-        'country_id' => 'required|integer|exists:countries,id',
-        'language_id' => 'required|integer|exists:languages,id',
-        'loi' => 'required|integer|min:1',
-        'ir' => 'required|integer|min:1|max:100',
-        'total_completes' => 'required|integer|min:1',
-    ]);
+    $isUpdate = $request->filled('id');
 
-    // ✅ Check using request()->filled()
-    if ($request->filled('id')) {
+    $rules = [
+        'id' => 'nullable|integer|exists:survey_campaigns,id',
+        'campaignName' => $isUpdate ? 'sometimes|string|max:255' : 'nullable|string|max:255',
+        'country_id' => $isUpdate ? 'sometimes|integer|exists:countries,id' : 'required|integer|exists:countries,id',
+        'language_id' => $isUpdate ? 'sometimes|integer|exists:languages,id' : 'required|integer|exists:languages,id',
+        'loi' => $isUpdate ? 'sometimes|integer|min:1' : 'required|integer|min:1',
+        'ir' => $isUpdate ? 'sometimes|integer|min:1|max:100' : 'required|integer|min:1|max:100',
+        'total_completes' => $isUpdate ? 'sometimes|integer|min:1' : 'required|integer|min:1',
+    ];
+
+    $validated = $request->validate($rules);
+
+    if ($isUpdate) {
 
         $campaign = SurveyCampaign::findOrFail($request->id);
 
-        // id ko update data me include mat karo
         unset($validated['id']);
 
-        $campaign->update($validated);
+        $campaign->update($validated); // 🔥 only passed fields update
 
         $message = 'Campaign updated successfully';
 
@@ -68,6 +70,7 @@ public function storeBasics(Request $request)
         'data' => $campaign
     ]);
 }
+
 
 
 
