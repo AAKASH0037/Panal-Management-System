@@ -7,43 +7,43 @@ use App\Models\SurveyCampaign;
 
 class CampaignReviewApiController extends Controller
 {
-    public function review($id)
-    {
-        $campaign = SurveyCampaign::with('panels')->findOrFail($id);
+   public function review($id)
+{
+    $campaign = SurveyCampaign::with('panels.provider')->findOrFail($id);
 
-        $panelData = [];
-        $totalCompletes = 0;
+    $panelData = [];
+    $totalCompletes = 0;
 
-        foreach ($campaign->panels as $panel) {
+    foreach ($campaign->panels as $panel) {
 
-            $panelData[] = [
-                'panel_provider_id' => $panel->panel_provider_id,
-                'target_completes'  => (int) $panel->target_completes,
-                'achieved_completes'=> (int) $panel->achieved_completes,
-                'cpi'               => (float) $panel->cpi,
-                'entry_url'         => $panel->entry_url,
-                'status'            => $panel->status,
-            ];
+        $panelData[] = [
+            'panel_provider_id'   => $panel->panel_provider_id,
+            'panel_provider_name' => $panel->provider->name ?? null,
+            'target_completes'    => (int) $panel->target_completes,
+            'achieved_completes'  => (int) $panel->achieved_completes,
+            'cpi'                 => (float) $panel->cpi,
+            'entry_url'           => $panel->entry_url,
+            'status'              => $panel->status,
+        ];
 
-            $totalCompletes += $panel->target_completes;
-        }
-
-        return response()->json([
-            'campaign_details' => [
-                'name'         => $campaign->campaignName,
-                'country'      => $campaign->country,
-                'loi'          => $campaign->loi,
-                'ir'           => $campaign->ir,
-                'total_target' => $campaign->total_completes ?? $totalCompletes
-            ],
-
-            'panel_allocation' => $panelData,
-
-            'summary' => [
-                'total_completes' => $totalCompletes
-            ]
-        ]);
+        $totalCompletes += $panel->target_completes;
     }
+
+    return response()->json([
+        'campaign_details' => [
+            'name'         => $campaign->campaignName,
+            'country'      => $campaign->country,
+            'loi'          => $campaign->loi,
+            'ir'           => $campaign->ir,
+            'total_target' => $campaign->total_completes ?? $totalCompletes
+        ],
+        'panel_allocation' => $panelData,
+        'summary' => [
+            'total_completes' => $totalCompletes
+        ]
+    ]);
+}
+
 
     public function launch($id)
 {
