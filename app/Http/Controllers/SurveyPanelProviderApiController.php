@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SurveyPanelProvider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\region;
 
 class SurveyPanelProviderApiController extends Controller
 {
@@ -38,7 +39,7 @@ class SurveyPanelProviderApiController extends Controller
             // BASIC
             'name'        => 'required|string',
             'panel_id'    => 'required|string',
-            'country_id'  => 'required|exists:countries,id',
+            'region_id'  => 'required|exists:regions,id',
 
             // REDIRECTS
             'success_url'      => 'required|url',
@@ -54,7 +55,7 @@ class SurveyPanelProviderApiController extends Controller
         SurveyPanelProvider::create([
             'name'             => $request->name,        
             'panel_id'         => $request->panel_id,    
-            'country_id'       => $request->country_id,  
+            'region_id'       => $request->region_id,  
 
             'success_url'      => $request->success_url,
             'terminate_url'    => $request->terminate_url,
@@ -64,9 +65,20 @@ class SurveyPanelProviderApiController extends Controller
             'status' => 'active'
         ]);
     }
+
+      public function allRegion()
+{
+    $regions = Region::select('id', 'region_name')->get();
+
+    return response()->json([
+        'status' => true,
+        'data'   => $regions
+    ]);
+}
      public function index()
     {
-        $providers = SurveyPanelProvider::with('country')
+       // dd("njfnj");
+        $providers = SurveyPanelProvider::with('region')
             ->whereNull('deleted_at')
             ->get()
             ->map(function ($provider) {
@@ -75,7 +87,7 @@ class SurveyPanelProviderApiController extends Controller
                     'id'            => $provider->id,
                     'provider_name' => ucfirst($provider->name),
                     'panel_id'      => strtoupper($provider->panel_id),
-                    'region'        => optional($provider->country)->name ?? 'Global',
+                    'region'        => optional($provider->region)->region_name ?? 'Global',
                     'status'        => ucfirst($provider->status),
                     'api_health'    => $this->apiHealth($provider),
                 ];

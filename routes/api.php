@@ -79,8 +79,8 @@ use App\Http\Controllers\SurveyPanelProviderApiController;
 
 
    Route::get('/countries', [SurveyCampaignApiController::class, 'country']);
-    Route::get('/languages', [SurveyCampaignApiController::class, 'language']);
-    Route::get('/campaigns/{id}/review', [CampaignReviewApiController::class, 'review']);
+   Route::get('/languages', [SurveyCampaignApiController::class, 'language']);
+   Route::get('/campaigns/{id}/review', [CampaignReviewApiController::class, 'review']);
 Route::post('/campaigns/{id}/launch', [CampaignReviewApiController::class, 'launch']);
 
  Route::get('/panel-providers', [PanelController::class, 'getAllPanels']);
@@ -116,10 +116,10 @@ Route::prefix('survey/campaigns')->group(function () {
         '{campaignId}/panels/{panelProviderId}/final-update',
         [PanelController::class, 'finalUpdate']
     );
-Route::post(
-        '{campaignId}/panel-provider/{panelProviderId}/final-delete',
-        [PanelController::class, 'finalDelete']
-    );
+Route::delete(
+    '{campaignId}/panels/{panelProviderId}',
+    [PanelController::class, 'finalDelete']
+);
     /* =========================
      * PANEL ROUTES
      * ========================= */
@@ -132,12 +132,9 @@ Route::post(
     /* =========================
      * CAMPAIGN CORE
      * ========================= */
-
+    Route::get('/basic/{id}', [SurveyCampaignApiController::class, 'basicCampaignShow']);
     Route::get('/', [SurveyCampaignApiController::class, 'index']);
     Route::post('/', [SurveyCampaignApiController::class, 'storeBasics']);
-
-    Route::post('{id}/redirects', [SurveyCampaignApiController::class, 'storeRedirects']);
-
     Route::delete('{id}', [SurveyCampaignApiController::class, 'destroy']);
     Route::post('{id}/restore', [SurveyCampaignApiController::class, 'restore']);
     Route::delete('{id}/force', [SurveyCampaignApiController::class, 'forceDelete']);
@@ -148,9 +145,9 @@ Route::post(
     [SurveyPanelProviderApiController::class, 'store']
 );
 Route::put('/survey-panel-providers/{provider}', [SurveyPanelProviderApiController::class, 'update']);
-
+Route::get('/regions', [SurveyPanelProviderApiController::class, 'allRegion']);
 // routes/api.php
-Route::get('/panel-providers', [SurveyPanelProviderApiController::class, 'index']);
+Route::get('/panel-providers_all', [SurveyPanelProviderApiController::class, 'index']);
 Route::delete('/survey-panel-providers/{provider}', [SurveyPanelProviderApiController::class, 'deletePanel']);
 
 
