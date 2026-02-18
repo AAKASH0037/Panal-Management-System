@@ -12,6 +12,7 @@ class SurveyPanelProvider extends Model
     protected $table = 'survey_panel_providers';
 
     protected $fillable = ['name','panel_id',
+         'region_id',  
         'country_id',
         'success_url',
         'terminate_url',
@@ -30,6 +31,12 @@ public function country()
 {
     return $this->belongsTo(Country::class, 'country_id');
 }
+
+public function region()
+{
+    return $this->belongsTo(region::class, 'region_id');
+}
+
 
 }
 

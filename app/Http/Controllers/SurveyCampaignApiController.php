@@ -34,9 +34,9 @@ public function storeBasics(Request $request)
 
     $rules = [
         'id' => 'nullable|integer|exists:survey_campaigns,id',
-        'campaignName' => $isUpdate ? 'sometimes|string|max:255' : 'nullable|string|max:255',
-        'country_id' => $isUpdate ? 'sometimes|integer|exists:countries,id' : 'required|integer|exists:countries,id',
-        'language_id' => $isUpdate ? 'sometimes|integer|exists:languages,id' : 'required|integer|exists:languages,id',
+        'campaignName' => 'nullable|string|max:255',
+        'country_id' => $isUpdate ? 'sometimes|exists:countries,id' : 'required|exists:countries,id',
+        'language_id' => $isUpdate ? 'sometimes|exists:languages,id' : 'required|exists:languages,id',
         'loi' => $isUpdate ? 'sometimes|integer|min:1' : 'required|integer|min:1',
         'ir' => $isUpdate ? 'sometimes|integer|min:1|max:100' : 'required|integer|min:1|max:100',
         'total_completes' => $isUpdate ? 'sometimes|integer|min:1' : 'required|integer|min:1',
@@ -47,19 +47,22 @@ public function storeBasics(Request $request)
     if ($isUpdate) {
 
         $campaign = SurveyCampaign::findOrFail($request->id);
-
-        unset($validated['id']);
-
-        $campaign->update($validated); // 🔥 only passed fields update
+        $campaign->update($request->except('id'));
 
         $message = 'Campaign updated successfully';
 
     } else {
 
-        $campaign = SurveyCampaign::create([
-            ...$validated,
-            'status' => 'draft',
-        ]);
+        $campaign = SurveyCampaign::create(
+            $request->only([
+                'campaignName',
+                'country_id',
+                'language_id',
+                'loi',
+                'ir',
+                'total_completes'
+            ]) + ['status' => 'draft']
+        );
 
         $message = 'Campaign created successfully';
     }
@@ -70,6 +73,25 @@ public function storeBasics(Request $request)
         'data' => $campaign
     ]);
 }
+public function basicCampaignShow($id)
+{
+    $campaign = SurveyCampaign::select(
+        'id',
+        'campaignName',
+        'country_id',
+        'language_id',
+        'loi',
+        'ir',
+        'total_completes',
+        'status'
+    )->findOrFail($id);
+
+    return response()->json([
+        'status' => true,
+        'data' => $campaign
+    ]);
+}
+
 
 
 

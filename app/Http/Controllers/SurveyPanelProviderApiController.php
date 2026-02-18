@@ -14,57 +14,67 @@ class SurveyPanelProviderApiController extends Controller
     /* =====================================
        🔥 ONLY PUBLIC API
     ===================================== */
-    public function store(Request $request)
-    {
-        $this->validateRequest($request);
+ public function store(Request $request)
+{
+   // dd("jdj");
+   $validated = $this->validateRequest($request);
+//dd($validated);
+    DB::transaction(function () use ($validated) {
+        $this->saveProvider($validated);
+    });
 
-        DB::transaction(function () use ($request) {
-            $this->saveProvider($request);
-        });
+    return response()->json([
+        'status'  => true,
+        'message' => 'Panel Provider saved successfully'
+    ], 201);
+}
 
-        return response()->json([
-            'status'  => true,
-            'message' => 'Panel Provider saved successfully'
-        ], 201);
-    }
 
     /* =====================================
        🔒 PRIVATE FUNCTIONS
     ===================================== */
 
     // Step 1 + 2 + 3 validation
-    private function validateRequest(Request $request): void
-    {
-        $request->validate([
-            // BASIC
-            'name'        => 'required|string',
-            'panel_id'    => 'required|string',
-            'region_id'  => 'required|exists:regions,id',
+   private function validateRequest(Request $request): array
+{
 
-            // REDIRECTS
-            'success_url'      => 'required|url',
-            'terminate_url'    => 'required|url',
-            'overquota_url'    => 'required|url',
-            'quality_fail_url' => 'required|url',
-        ]);
-    }
+  // dd("mkfhjhj");
+    return $request->validate([
+
+        // BASIC SECTION
+        'basic.name'     => 'required|string|max:255',
+        'basic.panelId'  => 'required|string|max:255',
+        'basic.region'   => 'required|exists:regions,id',
+
+        // REDIRECT SECTION
+        'redirects.successUrl'     => 'required|string',
+        'redirects.terminateUrl'   => 'required|string',
+        'redirects.overquotaUrl'   => 'required|string',
+        'redirects.qualityFailUrl' => 'required|string',
+    ]);
+}
+
 
     // FINAL SAVE
-    private function saveProvider(Request $request): void
-    {
-        SurveyPanelProvider::create([
-            'name'             => $request->name,        
-            'panel_id'         => $request->panel_id,    
-            'region_id'       => $request->region_id,  
+ private function saveProvider(array $validated): void
+{
+  //  dd($validated);
+    SurveyPanelProvider::create([
+        // BASIC
+        'name'      => $validated['basic']['name'],
+        'panel_id'  => $validated['basic']['panelId'],
+        'region_id' => $validated['basic']['region'],
 
-            'success_url'      => $request->success_url,
-            'terminate_url'    => $request->terminate_url,
-            'overquota_url'    => $request->overquota_url,
-            'quality_fail_url' => $request->quality_fail_url,
+        // REDIRECTS
+        'success_url'      => $validated['redirects']['successUrl'],
+        'terminate_url'    => $validated['redirects']['terminateUrl'],
+        'overquota_url'    => $validated['redirects']['overquotaUrl'],
+        'quality_fail_url' => $validated['redirects']['qualityFailUrl'],
 
-            'status' => 'active'
-        ]);
-    }
+        'status' => 'active'
+    ]);
+}
+
 
       public function allRegion()
 {
@@ -75,6 +85,37 @@ class SurveyPanelProviderApiController extends Controller
         'data'   => $regions
     ]);
 }
+
+public function individualProvider($provider)
+{
+    $provider = SurveyPanelProvider::find($provider);
+
+    if (!$provider) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Provider not found'
+        ], 404);
+    }
+
+    return response()->json([
+        'basic' => [
+            'name'    => $provider->name,
+            'panelId' => $provider->panel_id,
+            'region'  => $provider->region_id,  // ✅ Only ID
+        ],
+        'redirects' => [
+            'successUrl'     => $provider->success_url,
+            'terminateUrl'   => $provider->terminate_url,
+            'overquotaUrl'   => $provider->overquota_url,
+            'qualityFailUrl' => $provider->quality_fail_url,
+        ],
+        'status' => $provider->status
+    ], 200);
+}
+
+
+
+
      public function index()
     {
        // dd("njfnj");
@@ -112,10 +153,9 @@ class SurveyPanelProviderApiController extends Controller
             ? 'Degraded'
             : 'Healthy';
     }
-    public function update(Request $request, SurveyPanelProvider $provider)
+ public function update(Request $request, SurveyPanelProvider $provider)
 {
-   // $this->validateRequest($request);
-
+   //    dd("jdhj");
     DB::transaction(function () use ($request, $provider) {
         $this->updateProvider($request, $provider);
     });
@@ -125,17 +165,19 @@ class SurveyPanelProviderApiController extends Controller
         'message' => 'Panel Provider updated successfully'
     ], 200);
 }
+
 private function updateProvider(Request $request, SurveyPanelProvider $provider): void
 {
     $provider->update([
-        'name'             => $request->name,
-        'panel_id'         => $request->panel_id,
-        'country_id'       => $request->country_id,
+        'name'      => $request->input('basic.name'),
+        'panel_id'  => $request->input('basic.panelId'),
+        'region_id' => $request->input('basic.region'),
 
-        'success_url'      => $request->success_url,
-        'terminate_url'    => $request->terminate_url,
-        'overquota_url'    => $request->overquota_url,  
-        'quality_fail_url' => $request->quality_fail_url,
+        // REDIRECTS
+        'success_url'      => $request->input('redirects.successUrl'),
+        'terminate_url'    => $request->input('redirects.terminateUrl'),
+        'overquota_url'    => $request->input('redirects.overquotaUrl'),
+        'quality_fail_url' => $request->input('redirects.qualityFailUrl'),
     ]);
 }
  public function deletePanel($id)

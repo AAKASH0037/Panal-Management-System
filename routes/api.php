@@ -144,8 +144,13 @@ Route::post(
     '/panel-provider/save',
     [SurveyPanelProviderApiController::class, 'store']
 );
-Route::put('/survey-panel-providers/{provider}', [SurveyPanelProviderApiController::class, 'update']);
+Route::put('/survey-panel-providers/update/{provider}', [SurveyPanelProviderApiController::class, 'update']);
 Route::get('/regions', [SurveyPanelProviderApiController::class, 'allRegion']);
+
+Route::get('/survey-panel-providers/individual/{provider}', 
+    [SurveyPanelProviderApiController::class, 'individualProvider']
+);
+
 // routes/api.php
 Route::get('/panel-providers_all', [SurveyPanelProviderApiController::class, 'index']);
 Route::delete('/survey-panel-providers/{provider}', [SurveyPanelProviderApiController::class, 'deletePanel']);

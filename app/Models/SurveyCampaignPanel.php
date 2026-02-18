@@ -18,6 +18,7 @@ class SurveyCampaignPanel extends Model
             'is_auto', 
         'achieved_completes',
         'cpi',
+        'skip' ,
          'entry_url',
         'status'
     ];
